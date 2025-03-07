@@ -1,7 +1,7 @@
 import argparse
 import json
 
-import tqdm
+from tqdm import trange, tqdm
 import seqeval
 import torch
 from torch.utils.data import DataLoader
@@ -80,7 +80,7 @@ data_loader_dev = DataLoader(
 )
 
 
-# Instantiate model
+# Instantiate the model
 model = MWETagger(
     model_name='bert-base-uncased',
     num_labels=len(label_to_id)
@@ -88,10 +88,11 @@ model = MWETagger(
 
 
 # Training loop
-for batch in data_loader_train:
-    logits = model(
-        input_ids=batch['input_ids'],
-        attention_mask=batch['attention_mask'],
-    )
-    print(logits.shape)
-    exit()
+for epoch in trange(NUM_EPOCHS, desc='Epoch'):
+    for step, batch in enumerate(tqdm(data_loader_train)):
+        logits = model(
+            input_ids=batch['input_ids'],
+            attention_mask=batch['attention_mask'],
+        )
+        print(logits.shape)
+        exit()
