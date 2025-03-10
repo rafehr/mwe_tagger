@@ -1,4 +1,4 @@
-from typing import List, Dict, Union
+from typing import Tuple, List, Dict
 
 from conllu import parse, TokenList
 import torch
@@ -126,3 +126,21 @@ def ids_to_tokens(
             )
     """
     return tokenizer.convert_ids_to_tokens(input_ids)
+
+def get_label_map(
+    data: List[TokenList]
+) -> Tuple[Dict[str, int], Dict[int, str]]:
+    """Creates dictionaries that map from labels to integers and
+    from integers to labels.
+    """
+    labels = [
+        tok['lextag']
+        for sent in data
+        for tok in sent
+    ]
+    unique_labels = sorted(list(set(labels)))
+    label_to_id = {l: i for i, l in enumerate(unique_labels)}
+    id_to_label = {i: l for l, i in label_to_id.items()}
+    id_to_label[-100] = '[IGNORE]'
+    return label_to_id, id_to_label
+

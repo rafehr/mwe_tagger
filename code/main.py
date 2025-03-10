@@ -1,15 +1,15 @@
 import argparse
 import json
 
-from tqdm import trange, tqdm
 import seqeval
 import torch
 from torch.utils.data import DataLoader
 from transformers import DataCollatorWithPadding
 from transformers import BertTokenizerFast
 
-from data import StreusleDataset, collate_fn # type: ignore
+from data import StreusleDataset, collate_fn, get_label_map # type: ignore
 from model import MWETagger
+from train import train
 
 arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument('config_path')
@@ -40,15 +40,9 @@ device_name = torch.cuda.get_device_name() if torch.cuda.is_available() else 'cp
 
 # Fetch the BIO-style labels that include MWE information and create
 # a label dictionary that includes all labels (train, dev and test).
-labels = [
-    tok['lextag']
-    for sent in train_data.sents + dev_data.sents + test_data.sents
-    for tok in sent
-]
-unique_labels = sorted(list(set(labels)))
-label_to_id = {l: i for i, l in enumerate(unique_labels)}
-id_to_label = {i: l for l, i in label_to_id.items()}
-id_to_label[-100] = '[IGNORE]'
+label_to_id, id_to_label = get_label_map(
+    data = train_data.sents + dev_data.sents + test_data.sents
+)
 
 # Instantiate BERT tokenizer
 tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased')
@@ -79,20 +73,13 @@ data_loader_dev = DataLoader(
     )
 )
 
-
 # Instantiate the model
 model = MWETagger(
     model_name='bert-base-uncased',
     num_labels=len(label_to_id)
 )
 
+# Train the model
+train(model=model, data_loader=data_loader_train, num_epochs=NUM_EPOCHS)
 
-# Training loop
-for epoch in trange(NUM_EPOCHS, desc='Epoch'):
-    for step, batch in enumerate(tqdm(data_loader_train)):
-        logits = model(
-            input_ids=batch['input_ids'],
-            attention_mask=batch['attention_mask'],
-        )
-        print(logits.shape)
-        exit()
+# Evaluate the model
