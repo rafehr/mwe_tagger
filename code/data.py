@@ -1,3 +1,4 @@
+import json
 from typing import Tuple, List, Dict
 
 from conllu import parse, TokenList
@@ -55,7 +56,10 @@ def collate_fn(
         align_labels(enc_labels, batch_encoding.word_ids(i))
         for i, enc_labels in enumerate(batch_enc_labels)
     ]
-    batch_encoding['labels'] = batch_aligned_labels
+    batch_encoding['labels'] = torch.tensor(
+        batch_aligned_labels, 
+        dtype=torch.long
+    )
     return batch_encoding 
 
 def read_streusle_conllulex(file_path: str) -> List[TokenList]:
@@ -77,7 +81,7 @@ def align_labels(
         word_ids: List[int | None]
 ) -> List[int]:
     """Aligns the labels with the tokenized input. Only the first of
-    the subwords is labeled, the others receive the palceholder -100.
+    the subwords is labeled, the others receive the placeholder -100.
 
     Args:
         enc_labels: The original labels, already converted to integers
@@ -127,11 +131,12 @@ def ids_to_tokens(
     """
     return tokenizer.convert_ids_to_tokens(input_ids)
 
-def get_label_map(
+def get_label_dict(
     data: List[TokenList]
 ) -> Tuple[Dict[str, int], Dict[int, str]]:
     """Creates dictionaries that map from labels to integers and
-    from integers to labels.
+    from integers to labels. Also, it writes the label dictionaries
+    to JSON files.
     """
     labels = [
         tok['lextag']
@@ -142,5 +147,12 @@ def get_label_map(
     label_to_id = {l: i for i, l in enumerate(unique_labels)}
     id_to_label = {i: l for l, i in label_to_id.items()}
     id_to_label[-100] = '[IGNORE]'
+    save_labels(label_to_id=label_to_id, id_to_label=id_to_label)
     return label_to_id, id_to_label
 
+def save_labels(label_to_id: Dict[str, int], id_to_label: Dict[int, str]):
+    """Writes the label dictionaries to a JSON file."""
+    with open('label_to_id.json', 'w') as f:
+        json.dump(label_to_id, f, indent=4)
+    with open('id_to_label.json', 'w') as f:
+        json.dump(id_to_label, f, indent=4)
