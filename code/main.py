@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 from transformers import DataCollatorWithPadding
 from transformers import BertTokenizerFast
 
-from data import StreusleDataset, collate_fn, get_label_map # type: ignore
+from data import StreusleDataset, collate_fn, get_label_dict # type: ignore
 from model import MWETagger
 from train import train
 
@@ -27,6 +27,7 @@ TEST_PATH = config['data']['test_path']
 # Training
 BATCH_SIZE = config['training']['batch_size']
 NUM_EPOCHS = config['training']['num_epochs']
+LEARNING_RATE = config['training']['learning_rate']
 SAVE_DIR = config['training']['save_dir']
 
 # Read STREUSLE data and create data sets
@@ -40,7 +41,7 @@ device_name = torch.cuda.get_device_name() if torch.cuda.is_available() else 'cp
 
 # Fetch the BIO-style labels that include MWE information and create
 # a label dictionary that includes all labels (train, dev and test).
-label_to_id, id_to_label = get_label_map(
+label_to_id, id_to_label = get_label_dict(
     data = train_data.sents + dev_data.sents + test_data.sents
 )
 
@@ -48,7 +49,7 @@ label_to_id, id_to_label = get_label_map(
 tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased')
 
 # Create data loaders for train and dev
-data_loader_train = DataLoader(
+train_data_loader = DataLoader(
     dataset=train_data,
     batch_size=BATCH_SIZE,
     shuffle=True,
@@ -61,7 +62,7 @@ data_loader_train = DataLoader(
     )
 )
 
-data_loader_dev = DataLoader(
+dev_data_loader = DataLoader(
     dataset=dev_data,
     batch_size=BATCH_SIZE,
     num_workers=0,
@@ -80,6 +81,13 @@ model = MWETagger(
 )
 
 # Train the model
-train(model=model, data_loader=data_loader_train, num_epochs=NUM_EPOCHS)
+train(
+    model=model,
+    train_data_loader=train_data_loader,
+    dev_data_loader=dev_data_loader,
+    num_epochs=NUM_EPOCHS,
+    learning_rate=LEARNING_RATE,
+    save_dir=SAVE_DIR
+)
 
 # Evaluate the model
