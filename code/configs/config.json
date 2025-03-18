@@ -2,7 +2,8 @@
     "data": {
         "train_path": "../data/streusle.ud_train.conllulex",
         "dev_path": "../data/streusle.ud_dev.conllulex",
-        "test_path": "../data/streusle.ud_dev.conllulex"
+        "test_path": "../data/streusle.ud_dev.conllulex",
+        "bio_scheme": "bio2"
     },
     "training": {
         "batch_size": 4,
