@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from tqdm import trange, tqdm
 import torch
@@ -11,9 +12,10 @@ def train(
     model: nn.Module,
     train_data_loader: torch.utils.data.DataLoader,
     dev_data_loader: torch.utils.data.DataLoader,
+    device: str,
     num_epochs: int,
     learning_rate: float,
-    save_dir: str
+    save_dir: Path
 ):
     criterion = nn.CrossEntropyLoss(ignore_index=-100)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
@@ -24,7 +26,7 @@ def train(
     patience = 2
     counter = 0
 
-    if not os.path.exists(save_dir):
+    if not save_dir.exists():
         os.makedirs(save_dir)
 
     # Train loop
@@ -32,19 +34,23 @@ def train(
         total_loss = 0
         total_samples = 0
         # Making batch-wise predictions
-        for step, batch in enumerate(tqdm(train_data_loader)):
+        for batch in tqdm(train_data_loader):
+            batch_input_ids = batch['input_ids'].to(device)
+            batch_attention_mask = batch['attention_mask'].to(device)
+            batch_labels = batch['labels'].to(device)
+
             # Get batch size for weighing the batch-wise loss
             batch_size = batch['input_ids'].shape[0]
             # Make predictions 
             logits = model(
-                input_ids=batch['input_ids'],
-                attention_mask=batch['attention_mask'],
+                input_ids=batch_input_ids,
+                attention_mask=batch_attention_mask,
             )
 
             # Compute the loss
             loss = criterion(
                 logits.view(-1, logits.shape[2]),
-                batch['labels'].view(-1)
+                batch_labels.view(-1)
             )
 
             # Add batch loss to total loss and weigh it by batch size
@@ -57,7 +63,7 @@ def train(
             optimizer.step()
             # Reset the gradients
             optimizer.zero_grad()
-            # break
+            break
 
         # Print loss averaged over all batches 
         average_loss = total_loss/total_samples
@@ -89,5 +95,5 @@ def train(
 
         # Put model back into training mode
         model.train()
-        # exit()
+        exit()
         

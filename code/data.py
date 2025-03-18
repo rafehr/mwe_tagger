@@ -1,5 +1,6 @@
 import json
 from typing import Tuple, List, Dict
+from pathlib import Path
 
 from conllu import parse, TokenList
 import torch
@@ -13,7 +14,7 @@ from transformers.tokenization_utils_base import BatchEncoding
 ########################################################################
 
 class StreusleDataset(Dataset):
-    def __init__(self, data_path):
+    def __init__(self, data_path: Path):
         self.sents = read_streusle_conllulex(data_path)
 
     def __len__(self):
@@ -62,7 +63,7 @@ def collate_fn(
     )
     return batch_encoding 
 
-def read_streusle_conllulex(file_path: str) -> List[TokenList]:
+def read_streusle_conllulex(file_path: Path) -> List[TokenList]:
     """Reads a STREUSLE conllulex file."""
     fields = (
         'id', 'form', 'lemma', 'upos',
