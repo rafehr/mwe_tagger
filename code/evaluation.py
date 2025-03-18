@@ -32,6 +32,7 @@ def convert_labels(
     predictions: List[List[int]],
     label_path: str
 ) -> Tuple[List[List[str]], List[List[str]]]:
+    """Converts integers labes back to BIO-style labels."""
     with open(label_path, 'r') as f:
         id_to_label = json.load(f)
     id_to_label = {int(k): v for k, v in id_to_label.items()}
@@ -51,6 +52,7 @@ def compute_eval_metrics(
     preds: List[List[int]],
     label_path: str
 ):
+    """Computs accuracy and F1 with seqeval.  """
     # Remove -100 and the corresponding predictions
     gold_labels, preds = remove_ignore_labels(gold_labels, preds)
     # Convert integer labels back to IOB labels
@@ -60,8 +62,8 @@ def compute_eval_metrics(
         label_path=label_path
     )
     accuracy = accuracy_score(gold_conv_labels, conv_predictions)
-    # f1 = f1_score(gold_conv_labels, conv_predictions)
-    return accuracy # , f1
+    f1 = f1_score(gold_conv_labels, conv_predictions)
+    return accuracy, f1
 
 
 def evaluate(
@@ -100,12 +102,12 @@ def evaluate(
         print(f"Loss: {average_loss:.4f}")
 
 
-        accuracy = compute_eval_metrics(
+        accuracy, f1 = compute_eval_metrics(
             gold_labels=all_labels,
             preds=all_predictions,
             label_path='id_to_label.json'
         )
-        # print(f"Accuracy: {accuracy}, F1-Score: {f1}")
-        print(f"Accuracy validation set: {accuracy}")
+        print(f"Accuracy: {accuracy}, F1-Score: {f1}")
+        # print(f"Accuracy validation set: {accuracy}")
     return loss
  
