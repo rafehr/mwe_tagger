@@ -13,6 +13,7 @@
         "num_epochs": 10,
         "learning_rate": 3e-05,
         "save_dir": "./saved/",
-        "seed": 42
+        "seed": 42,
+        "patience": 2
     }
 }
