@@ -8,6 +8,7 @@ from transformers import DataCollatorWithPadding
 from transformers import BertTokenizerFast
 
 from data import StreusleDataset, collate_fn, get_label_dict # type: ignore
+from preprocessing import change_lextag_labels
 from model import MWETagger
 from train import train
 
@@ -29,11 +30,16 @@ BATCH_SIZE = config['training']['batch_size']
 NUM_EPOCHS = config['training']['num_epochs']
 LEARNING_RATE = config['training']['learning_rate']
 SAVE_DIR = config['training']['save_dir']
+BIO_SCHEME = config['data']['bio_scheme']
 
 # Read STREUSLE data and create data sets
 train_data = StreusleDataset(TRAIN_PATH)
 dev_data = StreusleDataset(DEV_PATH)
 test_data = StreusleDataset(TEST_PATH)
+
+# Change LEXTAG labels so that only VMWEs have IOB labels (including the
+# vmwe category, i.e. B-VID) and everything else receives the 'O' tag
+change_lextag_labels(train_data.sents + dev_data.sents + test_data.sents)
 
 # Specify device
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
