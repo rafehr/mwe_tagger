@@ -24,6 +24,7 @@ with open(args.config_path, 'r', encoding='utf-8') as f:
 TRAIN_PATH = Path(config['data']['train_path'])
 DEV_PATH = Path(config['data']['dev_path'])
 TEST_PATH = Path(config['data']['test_path'])
+BIO_SCHEME = config['data']['bio_scheme']
 
 # Model configs
 MODEL_NAME = config["model"]["model_name"]
@@ -33,7 +34,7 @@ BATCH_SIZE = config['training']['batch_size']
 NUM_EPOCHS = config['training']['num_epochs']
 LEARNING_RATE = config['training']['learning_rate']
 SAVE_DIR = Path(config['training']['save_dir'])
-BIO_SCHEME = config['data']['bio_scheme']
+PATIENCE = config['training']['patience']
 
 # Read STREUSLE data and create data sets
 train_data = StreusleDataset(TRAIN_PATH)
@@ -88,7 +89,8 @@ dev_data_loader = DataLoader(
 # Instantiate the model
 model = MWETagger(
     model_name=MODEL_NAME,
-    num_labels=len(label_to_id)
+    num_labels=len(label_to_id),
+    device=device
 ).to(device)
 
 # Train the model
@@ -98,6 +100,7 @@ train(
     dev_data_loader=dev_data_loader,
     device=device,
     num_epochs=NUM_EPOCHS,
+    patience=PATIENCE,
     learning_rate=LEARNING_RATE,
     save_dir=SAVE_DIR
 )

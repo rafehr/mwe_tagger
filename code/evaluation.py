@@ -70,6 +70,7 @@ def evaluate(
     model: nn.Module,
     data_loader: torch.utils.data.DataLoader,
     criterion: nn.CrossEntropyLoss,
+    device: str,
     batch_size: int
 ):
     model.eval()
@@ -79,21 +80,29 @@ def evaluate(
         total_loss = 0
         total_samples = 0
         for batch in tqdm(data_loader):
+            batch_input_ids = batch['input_ids'].to(device)
+            batch_attention_mask = batch['attention_mask'].to(device)
+            batch_labels = batch['labels'].to(device)
+
             # Get batch size for weighing the batch-wise loss
             batch_size = batch['input_ids'].shape[0]
             # Make predictions
             logits = model(
-                input_ids=batch['input_ids'],
-                attention_mask=batch['attention_mask']
+                input_ids=batch_input_ids,
+                attention_mask=batch_attention_mask
             )
             predictions = torch.argmax(logits, dim=2)
-            all_predictions.extend(predictions.tolist())
-            all_labels.extend(batch['labels'].tolist())
+            
             # Compute the loss
             loss = criterion(
                     logits.view(-1, logits.shape[2]),
-                    batch['labels'].view(-1)
-                )
+                    batch_labels.view(-1)
+            )
+                    
+            # Add batch-wise predictions and labels to overall
+            # predictions and labels
+            all_predictions.extend(predictions.tolist())
+            all_labels.extend(batch_labels.tolist())
             
             # Add batch loss to total loss and weigh it by batch size
             total_loss += loss.item() * batch_size

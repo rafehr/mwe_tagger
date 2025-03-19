@@ -14,6 +14,7 @@ def train(
     dev_data_loader: torch.utils.data.DataLoader,
     device: str,
     num_epochs: int,
+    patience: int,
     learning_rate: float,
     save_dir: Path
 ):
@@ -23,7 +24,6 @@ def train(
 
     # Define criteria for early stopping
     best_val_loss = float('inf')
-    patience = 2
     counter = 0
 
     if not save_dir.exists():
@@ -63,7 +63,7 @@ def train(
             optimizer.step()
             # Reset the gradients
             optimizer.zero_grad()
-            break
+            # break
 
         # Print loss averaged over all batches 
         average_loss = total_loss/total_samples
@@ -76,6 +76,7 @@ def train(
             model=model,
             data_loader=dev_data_loader,
             criterion=criterion,
+            device=device,
             batch_size=batch_size
         )
 
@@ -95,5 +96,5 @@ def train(
 
         # Put model back into training mode
         model.train()
-        exit()
+        # exit()
         

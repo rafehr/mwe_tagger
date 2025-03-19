@@ -3,9 +3,10 @@ from torch import Tensor
 from transformers import BertModel
 
 class MWETagger(nn.Module):
-    def __init__(self, model_name: str, num_labels: int):
+    def __init__(self, model_name: str, num_labels: int, device: str):
         super(MWETagger, self).__init__()
         self.num_labels = num_labels
+        self.device = device
         self.base_model = BertModel.from_pretrained(model_name)
         H = self.base_model.config.hidden_size
         self.classifier = nn.Linear(
@@ -32,7 +33,7 @@ class MWETagger(nn.Module):
         cont_reprs = self.base_model(
             input_ids=input_ids,
             attention_mask=attention_mask,
-        )[0]
+        )[0].to(self.device)
         # b x seq_len x num_labels
         logits = self.classifier(cont_reprs)
         return logits
