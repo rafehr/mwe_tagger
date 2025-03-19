@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from datetime import datetime
 
 from tqdm import trange, tqdm
 import torch
@@ -7,6 +8,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 from evaluation import evaluate
+from data import save_train_metadata
 
 def train(
     model: nn.Module,
@@ -25,9 +27,15 @@ def train(
     # Define criteria for early stopping
     best_val_loss = float('inf')
     counter = 0
+    early_stopping_triggered = False
 
-    if not save_dir.exists():
-        os.makedirs(save_dir)
+    best_val_f1 = None
+
+    # Generate timestamp to give a unique name to the directory
+    # the model is saved in
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    model_dir = save_dir / f'run_{timestamp}'
+    model_dir.mkdir(parents=True, exist_ok=True)
 
     # Train loop
     for epoch in trange(num_epochs, desc='Epoch'):
@@ -63,7 +71,7 @@ def train(
             optimizer.step()
             # Reset the gradients
             optimizer.zero_grad()
-            # break
+            break
 
         # Print loss averaged over all batches 
         average_loss = total_loss/total_samples
@@ -72,7 +80,7 @@ def train(
 
         # Evaluate the model on the dev set
         print(f"{'-' * 30} VALIDATION LOSS {'-' * 30}")
-        val_loss = evaluate(
+        val_loss, f1 = evaluate(
             model=model,
             data_loader=dev_data_loader,
             criterion=criterion,
@@ -83,10 +91,11 @@ def train(
         # Save model if validation loss improves
         if val_loss < best_val_loss:
             best_val_loss = val_loss
+            best_val_f1 = f1
             counter = 0
             torch.save(
                 model.state_dict(),
-                os.path.join(save_dir, "best_model.pth")
+                model_dir / 'best_model.pth'
             ) 
         else:
             counter += 1
@@ -96,5 +105,12 @@ def train(
 
         # Put model back into training mode
         model.train()
-        # exit()
-        
+        break
+
+    save_train_metadata(
+        num_epochs=epoch,
+        best_val_f1_score=best_val_f1,
+        early_stopping_triggered=early_stopping_triggered,
+        save_dir=model_dir
+    )
+    

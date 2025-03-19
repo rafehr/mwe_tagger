@@ -118,5 +118,5 @@ def evaluate(
         )
         print(f"Accuracy: {accuracy}, F1-Score: {f1}")
         # print(f"Accuracy validation set: {accuracy}")
-    return loss
+    return loss, f1
  
