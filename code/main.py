@@ -40,6 +40,7 @@ train_data = StreusleDataset(TRAIN_PATH)
 dev_data = StreusleDataset(DEV_PATH)
 test_data = StreusleDataset(TEST_PATH)
 
+
 # Change LEXTAG labels so that only VMWEs have IOB labels (including the
 # vmwe category, i.e. B-VID) and everything else receives the 'O' tag
 change_lextag_labels(train_data.sents + dev_data.sents + test_data.sents)
@@ -47,6 +48,7 @@ change_lextag_labels(train_data.sents + dev_data.sents + test_data.sents)
 # Specify device
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 device_name = torch.cuda.get_device_name() if torch.cuda.is_available() else 'cpu'
+print(f"Using the following device: {device_name}")
 
 # Fetch the BIO-style labels that include MWE information and create
 # a label dictionary that includes all labels (train, dev and test).
