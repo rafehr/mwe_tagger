@@ -23,8 +23,9 @@ def train(
     criterion = nn.CrossEntropyLoss(ignore_index=-100)
     optimizer = optim.Adam(
         model.parameters(),
-        lr=learning_rate
-        weight_decay=1e-5)
+        lr=learning_rate,
+        weight_decay=1e-5
+    )
     model.train()
 
     # Define criteria for early stopping

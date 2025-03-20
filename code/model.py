@@ -13,6 +13,7 @@ class MWETagger(nn.Module):
         self.device = device
         self.base_model = BertModel.from_pretrained(pretrained_model_name)
         H = self.base_model.config.hidden_size
+        self.dropout = nn.Dropout(0.2)
         self.classifier = nn.Linear(
             in_features=H,
             out_features=num_labels
@@ -38,6 +39,7 @@ class MWETagger(nn.Module):
             input_ids=input_ids,
             attention_mask=attention_mask,
         )[0].to(self.device)
+        cont_reprs = self.dropout(cont_reprs)
         # b x seq_len x num_labels
         logits = self.classifier(cont_reprs)
         return logits
