@@ -87,6 +87,7 @@ def train(
             device=device,
             batch_size=batch_size
         )
+        print(f"F1-Score: {f1}")
 
         # Save model if validation loss improves
         if val_loss < best_val_loss:

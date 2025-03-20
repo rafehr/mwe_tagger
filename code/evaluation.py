@@ -130,10 +130,6 @@ def evaluate(
             preds=all_predictions,
             label_path='id_to_label.json'
         )
-        print(f"Accuracy: {accuracy}, F1-Score: {f1}")
-        print("Classification Report:")
-        print(class_report)
-        # print(f"Accuracy validation set: {accuracy}")
     return loss, f1, class_report
  
 if __name__ == '__main__':
@@ -211,3 +207,8 @@ if __name__ == '__main__':
         device=device,
         batch_size=BATCH_SIZE
     )
+
+    print(f"F1-Score: {f1}")
+    print("Classification Report:")
+    print(class_report)
+
