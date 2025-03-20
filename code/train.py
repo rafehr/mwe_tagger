@@ -80,7 +80,7 @@ def train(
 
         # Evaluate the model on the dev set
         print(f"{'-' * 30} VALIDATION LOSS {'-' * 30}")
-        val_loss, f1 = evaluate(
+        val_loss, f1, class_report = evaluate(
             model=model,
             data_loader=dev_data_loader,
             criterion=criterion,

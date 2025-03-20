@@ -7,7 +7,9 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from transformers import BertTokenizerFast
 from tqdm import tqdm
-from seqeval.metrics import f1_score, accuracy_score, classification_report
+from seqeval.metrics import (
+    precision_score, recall_score, f1_score, accuracy_score, classification_report
+)
 
 from data import StreusleDataset, collate_fn # type: ignore
 from preprocessing import change_lextag_labels
@@ -68,8 +70,14 @@ def compute_eval_metrics(
         label_path=label_path
     )
     accuracy = accuracy_score(gold_conv_labels, conv_predictions)
+    precision = precision_score(gold_conv_labels, conv_predictions)
+    recall = recall_score(gold_conv_labels, conv_predictions)
     f1 = f1_score(gold_conv_labels, conv_predictions)
-    return accuracy, f1
+    class_report = classification_report(
+        gold_conv_labels,
+        conv_predictions
+    )
+    return accuracy, f1, class_report
 
 
 def evaluate(
@@ -117,14 +125,16 @@ def evaluate(
         print(f"Loss: {average_loss:.4f}")
 
 
-        accuracy, f1 = compute_eval_metrics(
+        accuracy, f1, class_report = compute_eval_metrics(
             gold_labels=all_labels,
             preds=all_predictions,
             label_path='id_to_label.json'
         )
         print(f"Accuracy: {accuracy}, F1-Score: {f1}")
+        print("Classification Report:")
+        print(class_report)
         # print(f"Accuracy validation set: {accuracy}")
-    return loss, f1
+    return loss, f1, class_report
  
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()
@@ -194,7 +204,7 @@ if __name__ == '__main__':
 
     criterion = nn.CrossEntropyLoss(ignore_index=-100)
 
-    val_loss, f1 = evaluate(
+    val_loss, f1, class_report = evaluate(
         model=model,
         data_loader=data_loader,
         criterion=criterion,
