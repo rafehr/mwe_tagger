@@ -27,6 +27,7 @@ BIO_SCHEME = config['data']['bio_scheme']
 
 # Model configs
 PRETRAINED_MODEL_NAME = config['model']['pretrained_model_name']
+TOKENIZER_NAME = config['model']['tokenizer_name']
 
 # Training configs
 BATCH_SIZE = config['training']['batch_size']
@@ -57,7 +58,7 @@ label_to_id, id_to_label = get_label_dict(
 )
 
 # Instantiate BERT tokenizer
-tokenizer = BertTokenizerFast.from_pretrained(PRETRAINED_MODEL_NAME)
+tokenizer = BertTokenizerFast.from_pretrained(TOKENIZER_NAME)
 
 # Create data loaders for train and dev
 train_data_loader = DataLoader(
