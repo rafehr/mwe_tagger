@@ -4,7 +4,6 @@ from pathlib import Path
 
 import torch
 from torch.utils.data import DataLoader
-from transformers import DataCollatorWithPadding
 from transformers import BertTokenizerFast
 
 from data import StreusleDataset, collate_fn, get_label_dict # type: ignore
@@ -13,7 +12,7 @@ from model import MWETagger
 from train import train
 
 arg_parser = argparse.ArgumentParser()
-arg_parser.add_argument('config_path')
+arg_parser.add_argument('config_path', help='Path to config file')
 args = arg_parser.parse_args()
 
 # Read the config file
@@ -27,7 +26,7 @@ TEST_PATH = Path(config['data']['test_path'])
 BIO_SCHEME = config['data']['bio_scheme']
 
 # Model configs
-MODEL_NAME = config["model"]["model_name"]
+PRETRAINED_MODEL_NAME = config['model']['pretrained_model_name']
 
 # Training configs
 BATCH_SIZE = config['training']['batch_size']
@@ -58,7 +57,7 @@ label_to_id, id_to_label = get_label_dict(
 )
 
 # Instantiate BERT tokenizer
-tokenizer = BertTokenizerFast.from_pretrained(MODEL_NAME)
+tokenizer = BertTokenizerFast.from_pretrained(PRETRAINED_MODEL_NAME)
 
 # Create data loaders for train and dev
 train_data_loader = DataLoader(
@@ -88,7 +87,7 @@ dev_data_loader = DataLoader(
 
 # Instantiate the model
 model = MWETagger(
-    model_name=MODEL_NAME,
+    pretrained_model_name=PRETRAINED_MODEL_NAME,
     num_labels=len(label_to_id),
     device=device
 ).to(device)

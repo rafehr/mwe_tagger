@@ -3,11 +3,15 @@ from torch import Tensor
 from transformers import BertModel
 
 class MWETagger(nn.Module):
-    def __init__(self, model_name: str, num_labels: int, device: str):
+    def __init__(self,
+        pretrained_model_name: str,
+        num_labels: int,
+        device: str
+    ):
         super(MWETagger, self).__init__()
         self.num_labels = num_labels
         self.device = device
-        self.base_model = BertModel.from_pretrained(model_name)
+        self.base_model = BertModel.from_pretrained(pretrained_model_name)
         H = self.base_model.config.hidden_size
         self.classifier = nn.Linear(
             in_features=H,

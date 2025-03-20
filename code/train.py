@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 from evaluation import evaluate
-from data import save_train_metadata
+from data import save_train_metadata # type: ignore
 
 def train(
     model: nn.Module,
@@ -71,7 +71,7 @@ def train(
             optimizer.step()
             # Reset the gradients
             optimizer.zero_grad()
-            # break
+            break
 
         # Print loss averaged over all batches 
         average_loss = total_loss/total_samples
@@ -106,7 +106,7 @@ def train(
 
         # Put model back into training mode
         model.train()
-        # break
+        break
 
     save_train_metadata(
         num_epochs=epoch,

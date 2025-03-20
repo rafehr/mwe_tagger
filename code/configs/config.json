@@ -6,7 +6,7 @@
         "bio_scheme": "bio2"
     },
     "model": {
-        "model_name": "bert-base-uncased"
+        "pretrained_model_name": "bert-base-uncased"
     },
     "training": {
         "batch_size": 4,

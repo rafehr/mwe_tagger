@@ -1,11 +1,17 @@
 import json
+import argparse
 from typing import Tuple, List
 
 import torch
 import torch.nn as nn
+from torch.utils.data import DataLoader
+from transformers import BertTokenizerFast
 from tqdm import tqdm
-
 from seqeval.metrics import f1_score, accuracy_score, classification_report
+
+from data import StreusleDataset, collate_fn # type: ignore
+from preprocessing import change_lextag_labels
+from model import MWETagger
 
 def remove_ignore_labels(
     gold_labels: List[List[int]],
@@ -120,3 +126,78 @@ def evaluate(
         # print(f"Accuracy validation set: {accuracy}")
     return loss, f1
  
+if __name__ == '__main__':
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument('config_path', help='Path to config file')
+    arg_parser.add_argument('model_path', help='Path to trained model')
+    arg_parser.add_argument(
+        'data_path',
+        help='Path to the data we want the model to be evaluated on.'
+    )
+    args = arg_parser.parse_args()
+
+    # Read the config file
+    with open(args.config_path, 'r', encoding='utf-8') as f:
+        config = json.load(f)
+
+    # Configs
+    PRETRAINED_MODEL_NAME = config['model']['pretrained_model_name']
+    BATCH_SIZE = config['training']['batch_size']
+
+    # Specify device
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    device_name = torch.cuda.get_device_name() if torch.cuda.is_available() else 'cpu'
+    print(f"Using the following device: {device_name}")
+
+    # Read STREUSLE data and create data sets
+    data = StreusleDataset(args.data_path)
+ 
+    # Change LEXTAG labels so that only VMWEs have IOB labels (including the
+    # vmwe category, i.e. B-VID) and everything else receives the 'O' tag
+    change_lextag_labels(data.sents)
+
+    # Instantiate BERT tokenizer
+    tokenizer = BertTokenizerFast.from_pretrained(PRETRAINED_MODEL_NAME)
+
+    # Load mapping from label to id
+    with open('label_to_id.json') as f:
+        label_to_id = json.load(f)
+
+    # Create data loaders for train and dev
+    data_loader = DataLoader(
+        dataset=data,
+        batch_size=BATCH_SIZE,
+        shuffle=True,
+        num_workers=0,
+        collate_fn=lambda batch: collate_fn(
+            batch=batch,
+            label_to_id=label_to_id,
+            tokenizer=tokenizer,
+            max_len=128
+        )
+    )
+
+    # Instantiate the model
+    model = MWETagger(
+        pretrained_model_name=PRETRAINED_MODEL_NAME,
+        num_labels=len(label_to_id),
+        device=device
+    ).to(device)
+
+    # Load trained models state dict
+    model.load_state_dict(
+        torch.load(
+            args.model_path,
+            map_location=torch.device(device)
+        )
+    )
+
+    criterion = nn.CrossEntropyLoss(ignore_index=-100)
+
+    val_loss, f1 = evaluate(
+        model=model,
+        data_loader=data_loader,
+        criterion=criterion,
+        device=device,
+        batch_size=BATCH_SIZE
+    )
