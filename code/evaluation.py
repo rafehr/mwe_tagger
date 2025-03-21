@@ -148,6 +148,7 @@ if __name__ == '__main__':
 
     # Configs
     PRETRAINED_MODEL_NAME = config['model']['pretrained_model_name']
+    TOKENIZER_NAME = config['model']['tokenizer_name']
     BATCH_SIZE = config['training']['batch_size']
 
     # Specify device
@@ -163,7 +164,7 @@ if __name__ == '__main__':
     change_lextag_labels(data.sents)
 
     # Instantiate BERT tokenizer
-    tokenizer = BertTokenizerFast.from_pretrained(PRETRAINED_MODEL_NAME)
+    tokenizer = BertTokenizerFast.from_pretrained(TOKENIZER_NAME)
 
     # Load mapping from label to id
     with open('label_to_id.json') as f:
