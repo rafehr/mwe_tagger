@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 from pathlib import Path
 from datetime import datetime
 
@@ -7,7 +8,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from evaluation import evaluate
+from evaluation import evaluate, EvalMetrics
 from data import save_train_metadata # type: ignore
 
 def train(
@@ -18,8 +19,8 @@ def train(
     num_epochs: int,
     patience: int,
     learning_rate: float,
-    save_dir: Path
-):
+    save_dir: Optional[Path] = None
+) -> EvalMetrics:
     criterion = nn.CrossEntropyLoss(ignore_index=-100)
     optimizer = optim.Adam(
         model.parameters(),
@@ -38,8 +39,9 @@ def train(
     # Generate timestamp to give a unique name to the directory
     # the model is saved in
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    model_dir = save_dir / f'run_{timestamp}'
-    model_dir.mkdir(parents=True, exist_ok=True)
+    if save_dir:
+        model_dir = save_dir / f'run_{timestamp}'
+        model_dir.mkdir(parents=True, exist_ok=True)
 
     # Train loop
     for epoch in trange(num_epochs, desc='Epoch'):
@@ -84,24 +86,30 @@ def train(
 
         # Evaluate the model on the dev set
         print(f"{'-' * 30} VALIDATION LOSS {'-' * 30}")
-        val_loss, f1, class_report = evaluate(
+        val_loss, eval_metrics = evaluate(
             model=model,
             data_loader=dev_data_loader,
             criterion=criterion,
             device=device,
             batch_size=batch_size
         )
-        print(f"F1-Score: {f1}")
+
+        print(f"F1-Score: {eval_metrics.f1}")
 
         # Save model if validation loss improves
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            best_val_f1 = f1
+            best_val_f1 = eval_metrics.f1
+            best_val_accuracy = eval_metrics.accuracy
+            best_val_precision = eval_metrics.precision
+            best_val_recall = eval_metrics.recall
+            best_val_class_report = eval_metrics.classification_report
             counter = 0
-            torch.save(
-                model.state_dict(),
-                model_dir / 'best_model.pth'
-            ) 
+            if save_dir:
+                torch.save(
+                    model.state_dict(),
+                    model_dir / 'best_model.pth' # type: ignore
+                ) 
         else:
             counter += 1
             if counter >= patience:
@@ -113,10 +121,18 @@ def train(
         model.train()
         # break
 
-    save_train_metadata(
-        num_epochs=epoch,
-        best_val_f1_score=best_val_f1,
-        early_stopping_triggered=early_stopping_triggered,
-        save_dir=model_dir
+    if save_dir:
+        save_train_metadata(
+            num_epochs=epoch,
+            best_val_f1_score=best_val_f1,
+            early_stopping_triggered=early_stopping_triggered,
+            save_dir=model_dir
+        )
+    return EvalMetrics(
+        best_val_accuracy,
+        best_val_precision,
+        best_val_recall,
+        best_val_f1,
+        best_val_class_report
     )
     

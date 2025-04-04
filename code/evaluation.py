@@ -1,6 +1,7 @@
 import json
 import argparse
-from typing import Tuple, List
+from typing import Tuple, List, Dict, Any
+from dataclasses import dataclass
 
 import torch
 import torch.nn as nn
@@ -14,6 +15,15 @@ from seqeval.metrics import (
 from data import StreusleDataset, collate_fn # type: ignore
 from preprocessing import change_lextag_labels
 from model import MWETagger
+
+@dataclass
+class EvalMetrics:
+    accuracy: float | List[float]
+    precision: float | List[float]
+    recall: float | List[float] 
+    f1: float | List[float] | None
+    classification_report: str | Dict[Any, Any]
+
 
 def remove_ignore_labels(
     gold_labels: List[List[int]],
@@ -59,7 +69,7 @@ def compute_eval_metrics(
     gold_labels: List[List[int]],
     preds: List[List[int]],
     label_path: str
-):
+) -> EvalMetrics: 
     """Computs accuracy and F1 with seqeval.  """
     # Remove -100 and the corresponding predictions
     gold_labels, preds = remove_ignore_labels(gold_labels, preds)
@@ -75,9 +85,10 @@ def compute_eval_metrics(
     f1 = f1_score(gold_conv_labels, conv_predictions)
     class_report = classification_report(
         gold_conv_labels,
-        conv_predictions
+        conv_predictions,
+        output_dict=True
     )
-    return accuracy, f1, class_report
+    return EvalMetrics(accuracy, precision, recall, f1, class_report)
 
 
 def evaluate(
@@ -86,7 +97,7 @@ def evaluate(
     criterion: nn.CrossEntropyLoss,
     device: str,
     batch_size: int
-):
+) -> Tuple[float, EvalMetrics]: 
     model.eval()
     all_predictions = []
     all_labels = []
@@ -125,12 +136,12 @@ def evaluate(
         print(f"Loss: {average_loss:.4f}")
 
 
-        accuracy, f1, class_report = compute_eval_metrics(
+        eval_metrics = compute_eval_metrics(
             gold_labels=all_labels,
             preds=all_predictions,
             label_path='id_to_label.json'
         )
-    return loss, f1, class_report
+    return average_loss, eval_metrics
  
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()
@@ -201,7 +212,7 @@ if __name__ == '__main__':
 
     criterion = nn.CrossEntropyLoss(ignore_index=-100)
 
-    val_loss, f1, class_report = evaluate(
+    val_loss, eval_metrics = evaluate(
         model=model,
         data_loader=data_loader,
         criterion=criterion,
@@ -209,7 +220,7 @@ if __name__ == '__main__':
         batch_size=BATCH_SIZE
     )
 
-    print(f"F1-Score: {f1}")
+    print(f"F1-Score: {eval_metrics.f1}")
     print("Classification Report:")
-    print(class_report)
+    print(eval_metrics.classification_report)
 

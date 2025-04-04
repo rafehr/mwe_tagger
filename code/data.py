@@ -14,10 +14,10 @@ from transformers.tokenization_utils_base import BatchEncoding
 ########################################################################
 
 class StreusleDataset(Dataset):
-    def __init__(self, data_path: Path):
-        self.sents = read_streusle_conllulex(data_path)
+    def __init__(self, sents: List[TokenList]):
+        self.sents = sents
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.sents)
 
     def __getitem__(self, idx: int) -> Dict[str, List[str]]:
@@ -175,3 +175,8 @@ def save_train_metadata(
     }
     with open(save_dir / 'train_metadata.json', 'w') as f:
         json.dump(train_metadata, f, indent=4)
+
+def create_subset(data: StreusleDataset, idxs: List[int]):
+    selected_sents = [data.sents[idx] for idx in idxs]
+    subset = StreusleDataset(sents=selected_sents)
+    return subset
