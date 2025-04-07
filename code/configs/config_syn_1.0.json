@@ -1,0 +1,21 @@
+{
+    "data": {
+        "train_path": "../data/streusle.ud_train.conllulex",
+        "dev_path": "../data/streusle.ud_dev.conllulex",
+        "test_path": "../data/streusle.ud_dev.conllulex",
+        "bio_scheme": "bio2"
+    },
+    "model": {
+        "pretrained_model_name": "yavasde/syntax-enhanced-1.0",
+        "tokenizer_name": "bert-base-uncased"
+    },
+    "training": {
+        "batch_size": 4,
+        "num_epochs": 20,
+        "learning_rate": 3e-05,
+        "save_dir": "./saved/",
+        "seed": 42,
+        "patience": 2,
+        "cross_validation": true
+    }
+}
