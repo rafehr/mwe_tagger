@@ -58,11 +58,13 @@ change_lextag_labels(train_data.sents + dev_data.sents + test_data.sents)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 device_name = torch.cuda.get_device_name() if torch.cuda.is_available() else 'cpu'
 print(f"Using the following device: {device_name}")
+print(f"Cross validation: {CROSS_VAL}")
 
 # Fetch the BIO-style labels that include MWE information and create
 # a label dictionary that includes all labels (train, dev and test).
 all_sents = train_data.sents + dev_data.sents + test_data.sents
 label_to_id, id_to_label = get_label_dict(data=all_sents)
+print(f"Using the following labels: {label_to_id}")
 
 # Instantiate BERT tokenizer
 tokenizer = BertTokenizerFast.from_pretrained(TOKENIZER_NAME)
@@ -102,6 +104,8 @@ if not CROSS_VAL:
         num_labels=len(label_to_id),
         device=device
     ).to(device)
+
+    print(f"Using the following model: {model}")
 
     # Train the model
     best_model_eval_metrics = train(
