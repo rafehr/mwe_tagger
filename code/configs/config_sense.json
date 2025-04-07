@@ -15,6 +15,7 @@
         "learning_rate": 3e-05,
         "save_dir": "./saved/",
         "seed": 42,
-        "patience": 2
+        "patience": 2,
+        "cross_validation": true
     }
 }
