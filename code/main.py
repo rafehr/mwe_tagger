@@ -105,7 +105,7 @@ if not CROSS_VAL:
         device=device
     ).to(device)
 
-    print(f"Using the following model: {model}")
+    print(f"Using the following model: \n{model}")
 
     # Train the model
     best_model_eval_metrics = train(
@@ -177,6 +177,8 @@ else:
             num_labels=len(label_to_id),
             device=device
         ).to(device)
+        
+        print(f"Using the following model: \n{model}")
 
         # Train the model
         best_model_eval_metrics = train(
