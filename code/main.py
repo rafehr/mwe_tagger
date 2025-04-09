@@ -119,6 +119,7 @@ if not CROSS_VAL:
         save_dir=SAVE_DIR
     )
 else:
+    # CROSS VALIDATION
     kf = KFold(n_splits=10, shuffle=True, random_state=42)
 
     # Add dev and test data to train_data. It is necessary to access

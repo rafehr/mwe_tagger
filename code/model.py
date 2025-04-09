@@ -43,3 +43,17 @@ class MWETagger(nn.Module):
         # b x seq_len x num_labels
         logits = self.classifier(cont_reprs)
         return logits
+
+class EnsembleMWETagger(nn.Module):
+    def __init__(
+        self,
+        pretrained_model_name_base: str,
+        pretrained_model_name_sem: str,
+        pretrained_model_name_syn: str,
+        num_labels: int
+    ):
+        super(EnsembleMWETagger, self).__init__()
+        pass
+
+    def forward(self):
+        pass
