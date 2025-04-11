@@ -96,6 +96,18 @@ def fetch_majority_vote(
     logits_sem: torch.Tensor,
     logits_syn: torch.Tensor
 ) -> torch.Tensor:
+    """Determines the majority vote for three different MWE taggers.
+    If there is a tie, the vote with the "most confidence" (i.e.
+    the largest logit value) is chosen.
+
+    Args:
+        logits_base: Logits of the baseline model
+        logits_sem: Logits of the semantically enhanced model
+        logits_syn: Logits of the syntactically enhanced model
+
+    Returns:
+        final_votes: The final predictions
+    """
     max_values_base, val_idxs_base = torch.max(logits_base, dim=2)
     max_values_sem, val_idxs_sem = torch.max(logits_sem, dim=2)
     max_values_syn, val_idxs_syn = torch.max(logits_syn, dim=2)
