@@ -2,6 +2,7 @@ import json
 import argparse
 from typing import Tuple, List, Dict, Any
 from dataclasses import dataclass
+from collections import Counter
 
 import torch
 import torch.nn as nn
@@ -14,7 +15,7 @@ from seqeval.metrics import (
 
 from data import StreusleDataset, collate_fn # type: ignore
 from preprocessing import change_lextag_labels
-from model import MWETagger
+from model import EnsembleMWETagger
 
 @dataclass
 class EvalMetrics:
@@ -50,7 +51,7 @@ def convert_labels(
     predictions: List[List[int]],
     label_path: str
 ) -> Tuple[List[List[str]], List[List[str]]]:
-    """Converts integers labes back to BIO-style labels."""
+    """Converts integers labels back to BIO-style labels."""
     with open(label_path, 'r') as f:
         id_to_label = json.load(f)
     id_to_label = {int(k): v for k, v in id_to_label.items()}
@@ -90,6 +91,40 @@ def compute_eval_metrics(
     )
     return EvalMetrics(accuracy, precision, recall, f1, class_report)
 
+def fetch_majority_vote(
+    logits_base: torch.Tensor,
+    logits_sem: torch.Tensor,
+    logits_syn: torch.Tensor
+) -> torch.Tensor:
+    max_values_base, val_idxs_base = torch.max(logits_base, dim=2)
+    max_values_sem, val_idxs_sem = torch.max(logits_sem, dim=2)
+    max_values_syn, val_idxs_syn = torch.max(logits_syn, dim=2)
+    
+    all_max_values = torch.stack(
+        (max_values_base, max_values_sem, max_values_syn)
+    )
+    all_idxs = torch.stack(
+        (val_idxs_base, val_idxs_sem, val_idxs_syn)
+    )
+    _, val_idxs_per_tok = torch.max(all_max_values, dim=0)
+        
+    num_rows = max_values_base.shape[0]
+    num_columns = max_values_base.shape[1]
+    final_votes = torch.zeros(num_rows, num_columns, dtype=torch.long)
+        
+    for i in range(0, num_rows):
+        for j in range(0, num_columns):
+            votes = []
+            votes.append(val_idxs_base[i, j].item())
+            votes.append(val_idxs_sem[i, j].item())
+            votes.append(val_idxs_syn[i, j].item())
+            most_common = Counter(votes).most_common()
+            if len(most_common) == 1 or most_common[0][1] > most_common[1][1]:
+                final_votes[i][j] = most_common[0][0]
+            else:
+                final_votes[i][j] = all_idxs[val_idxs_per_tok[i][j]][i][j]
+    return final_votes
+
 
 def evaluate(
     model: nn.Module,
@@ -112,18 +147,24 @@ def evaluate(
             # Get batch size for weighing the batch-wise loss
             batch_size = batch['input_ids'].shape[0]
             # Make predictions
-            logits = model(
+            logits_base, logits_sem, logits_syn = model(
                 input_ids=batch_input_ids,
                 attention_mask=batch_attention_mask
             )
-            predictions = torch.argmax(logits, dim=2)
+            logits_final = fetch_majority_vote(
+                logits_base=logits_base,
+                logits_sem=logits_sem,
+                logits_syn=logits_syn
+            )
+            predictions = torch.argmax(logits_final, dim=2)
             
             # Compute the loss
             loss = criterion(
-                    logits.view(-1, logits.shape[2]),
+                    logits_final.view(-1, logits_final.shape[2]),
                     batch_labels.view(-1)
             )
-                    
+            exit()
+             
             # Add batch-wise predictions and labels to overall
             # predictions and labels
             all_predictions.extend(predictions.tolist())
@@ -158,7 +199,9 @@ if __name__ == '__main__':
         config = json.load(f)
 
     # Configs
-    PRETRAINED_MODEL_NAME = config['model']['pretrained_model_name']
+    PRETRAINED_MODEL_NAME_BASE = config['model']['pretrained_model_name_base']
+    PRETRAINED_MODEL_NAME_SEM = config['model']['pretrained_model_name_sem']
+    PRETRAINED_MODEL_NAME_SYN = config['model']['pretrained_model_name_syn']
     TOKENIZER_NAME = config['model']['tokenizer_name']
     BATCH_SIZE = config['training']['batch_size']
 
@@ -196,8 +239,10 @@ if __name__ == '__main__':
     )
 
     # Instantiate the model
-    model = MWETagger(
-        pretrained_model_name=PRETRAINED_MODEL_NAME,
+    model = EnsembleMWETagger(
+        pretrained_model_name_base=PRETRAINED_MODEL_NAME_BASE,
+        pretrained_model_name_syn=PRETRAINED_MODEL_NAME_SYN,
+        pretrained_model_name_sem=PRETRAINED_MODEL_NAME_SEM,
         num_labels=len(label_to_id),
         device=device
     ).to(device)

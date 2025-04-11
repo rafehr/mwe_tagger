@@ -50,10 +50,37 @@ class EnsembleMWETagger(nn.Module):
         pretrained_model_name_base: str,
         pretrained_model_name_sem: str,
         pretrained_model_name_syn: str,
-        num_labels: int
+        num_labels: int,
+        device: str
     ):
         super(EnsembleMWETagger, self).__init__()
-        pass
+        self.mwe_tagger_base = MWETagger(
+            pretrained_model_name=pretrained_model_name_base,
+            num_labels=num_labels,
+            device=device
+        )
+        self.mwe_tagger_sem = MWETagger(
+            pretrained_model_name=pretrained_model_name_sem,
+            num_labels=num_labels,
+            device=device
+        )
+        self.mwe_tagger_syn = MWETagger(
+            pretrained_model_name=pretrained_model_name_syn,
+            num_labels=num_labels,
+            device=device
+        )
 
-    def forward(self):
-        pass
+    def forward(self, input_ids: Tensor, attention_mask: Tensor):
+        logits_base = self.mwe_tagger_base(
+            input_ids=input_ids,
+            attention_mask=attention_mask
+        )
+        logits_sem = self.mwe_tagger_sem(
+            input_ids=input_ids,
+            attention_mask=attention_mask
+        )
+        logits_syn = self.mwe_tagger_syn(
+            input_ids=input_ids,
+            attention_mask=attention_mask
+        )
+        return logits_base, logits_sem, logits_syn

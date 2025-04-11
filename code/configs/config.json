@@ -6,7 +6,9 @@
         "bio_scheme": "bio2"
     },
     "model": {
-        "pretrained_model_name": "bert-base-uncased",
+        "pretrained_model_name_base": "bert-base-uncased",
+        "pretrained_model_name_sem": "yavasde/sense-enhanced-bert",
+        "pretrained_model_name_syn": "yavasde/syntax-enhanced-0.5",
         "tokenizer_name": "bert-base-uncased"
     },
     "training": {
