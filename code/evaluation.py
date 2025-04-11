@@ -12,7 +12,7 @@ from seqeval.metrics import (
     precision_score, recall_score, f1_score, accuracy_score, classification_report
 )
 
-from data import StreusleDataset, collate_fn # type: ignore
+from data import read_streusle_data, StreusleDataset, collate_fn # type: ignore
 from preprocessing import change_lextag_labels
 from model import MWETagger
 
@@ -167,8 +167,11 @@ if __name__ == '__main__':
     device_name = torch.cuda.get_device_name() if torch.cuda.is_available() else 'cpu'
     print(f"Using the following device: {device_name}")
 
-    # Read STREUSLE data and create data sets
-    data = StreusleDataset(args.data_path)
+    # Reade STREUSLE data
+    sents = read_streusle_data(args.data_path)
+
+    # Create data set
+    data = StreusleDataset(sents)
  
     # Change LEXTAG labels so that only VMWEs have IOB labels (including the
     # vmwe category, i.e. B-VID) and everything else receives the 'O' tag
