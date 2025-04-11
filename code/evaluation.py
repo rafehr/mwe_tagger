@@ -12,7 +12,7 @@ from seqeval.metrics import (
     precision_score, recall_score, f1_score, accuracy_score, classification_report
 )
 
-from data import read_streusle_data, StreusleDataset, collate_fn # type: ignore
+from data import StreusleDataset, collate_fn, read_streusle_conllulex # type: ignore
 from preprocessing import change_lextag_labels
 from model import MWETagger
 
@@ -168,7 +168,7 @@ if __name__ == '__main__':
     print(f"Using the following device: {device_name}")
 
     # Reade STREUSLE data
-    sents = read_streusle_data(args.data_path)
+    sents = read_streusle_conllulex(args.data_path)
 
     # Create data set
     data = StreusleDataset(sents)
