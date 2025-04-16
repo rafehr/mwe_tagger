@@ -110,6 +110,7 @@ if not CROSS_VAL:
     # Train the model
     best_model_eval_metrics = train(
         model=model,
+        pretrained_model_name=PRETRAINED_MODEL_NAME,
         train_data_loader=train_data_loader,
         dev_data_loader=dev_data_loader,
         device=device,
@@ -183,6 +184,7 @@ else:
         # Train the model
         best_model_eval_metrics = train(
             model=model,
+            pretrained_model_name=PRETRAINED_MODEL_NAME,
             train_data_loader=train_data_loader,
             dev_data_loader=val_data_loader,
             device=device,
@@ -215,5 +217,3 @@ else:
     )
     with open(results_dir / 'results.json', 'w') as f:
         json.dump(results_dict, f, indent=4)
-
-    

@@ -13,6 +13,7 @@ from data import save_train_metadata # type: ignore
 
 def train(
     model: nn.Module,
+    pretrained_model_name: str,
     train_data_loader: torch.utils.data.DataLoader,
     dev_data_loader: torch.utils.data.DataLoader,
     device: str,
@@ -40,7 +41,7 @@ def train(
     # the model is saved in
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     if save_dir:
-        model_dir = save_dir / f'run_{timestamp}'
+        model_dir = save_dir / f'run_{timestamp}_{pretrained_model_name}'
         model_dir.mkdir(parents=True, exist_ok=True)
 
     # Train loop
