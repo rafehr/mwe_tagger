@@ -42,7 +42,7 @@ def train(
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     if save_dir:
         pretrained_model_name = pretrained_model_name.replace('/', '_')
-        model_dir = save_dir / f'run_{timestamp}_{pretrained_model_name}'
+        model_dir = save_dir / f'run_{pretrained_model_name}_{timestamp}'
         model_dir.mkdir(parents=True, exist_ok=True)
 
     # Train loop
