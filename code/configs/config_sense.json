@@ -16,6 +16,6 @@
         "save_dir": "./saved/",
         "seed": 42,
         "patience": 2,
-        "cross_validation": true
+        "cross_validation": false
     }
 }
