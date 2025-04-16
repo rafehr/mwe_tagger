@@ -163,19 +163,33 @@ def evaluate(
                 input_ids=batch_input_ids,
                 attention_mask=batch_attention_mask
             )
-            logits_final = fetch_majority_vote(
+
+            # Fetch the majority vote for a label or the
+            # vote with the most confidence (highest logit
+            # value).
+            predictions = fetch_majority_vote(
                 logits_base=logits_base,
                 logits_sem=logits_sem,
                 logits_syn=logits_syn
             )
-            predictions = torch.argmax(logits_final, dim=2)
             
-            # Compute the loss
-            loss = criterion(
-                    logits_final.view(-1, logits_final.shape[2]),
+            # Compute the loss for the base model
+            base_loss = criterion(
+                    logits_base.view(-1, logits_base.shape[2]),
                     batch_labels.view(-1)
             )
-            exit()
+            # Compute the loss for the semantically enhanced model
+            sem_loss = criterion(
+                    logits_sem.view(-1, logits_sem.shape[2]),
+                    batch_labels.view(-1)
+            )
+            # Compute the loss for the syntacticall enhanced model
+            syn_loss = criterion(
+                    logits_syn.view(-1, logits_syn.shape[2]),
+                    batch_labels.view(-1)
+            )
+            # Compute total batch loss
+            loss = base_loss + sem_loss + syn_loss
              
             # Add batch-wise predictions and labels to overall
             # predictions and labels
@@ -199,7 +213,18 @@ def evaluate(
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('config_path', help='Path to config file')
-    arg_parser.add_argument('model_path', help='Path to trained model')
+    arg_parser.add_argument(
+        'base_model_path',
+        help='Path to trained base model'
+    )
+    arg_parser.add_argument(
+        'sem_model_path',
+        help='Path to trained semantically enhanced model'
+    )
+    arg_parser.add_argument(
+        'syn_model_path',
+        help='Path to trained syntactically enhanced model'
+    )
     arg_parser.add_argument(
         'data_path',
         help='Path to the data we want the model to be evaluated on.'
@@ -258,17 +283,12 @@ if __name__ == '__main__':
         pretrained_model_name_base=PRETRAINED_MODEL_NAME_BASE,
         pretrained_model_name_syn=PRETRAINED_MODEL_NAME_SYN,
         pretrained_model_name_sem=PRETRAINED_MODEL_NAME_SEM,
+        base_model_path=args.base_model_path,
+        sem_model_path=args.sem_model_path,
+        syn_model_path=args.syn_model_path,
         num_labels=len(label_to_id),
         device=device
     ).to(device)
-
-    # Load trained models state dict
-    model.load_state_dict(
-        torch.load(
-            args.model_path,
-            map_location=torch.device(device)
-        )
-    )
 
     criterion = nn.CrossEntropyLoss(ignore_index=-100)
 

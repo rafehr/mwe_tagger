@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 from torch import Tensor
 from transformers import BertModel
@@ -50,6 +51,9 @@ class EnsembleMWETagger(nn.Module):
         pretrained_model_name_base: str,
         pretrained_model_name_sem: str,
         pretrained_model_name_syn: str,
+        base_model_path: str,
+        sem_model_path: str,
+        syn_model_path: str,
         num_labels: int,
         device: str
     ):
@@ -59,15 +63,33 @@ class EnsembleMWETagger(nn.Module):
             num_labels=num_labels,
             device=device
         )
+        self.mwe_tagger_base.load_state_dict(
+            torch.load(
+                base_model_path,
+                map_location=torch.device(device)
+            )
+        )
         self.mwe_tagger_sem = MWETagger(
             pretrained_model_name=pretrained_model_name_sem,
             num_labels=num_labels,
             device=device
         )
+        self.mwe_tagger_sem.load_state_dict(
+            torch.load(
+                sem_model_path,
+                map_location=torch.device(device)
+            )
+        )
         self.mwe_tagger_syn = MWETagger(
             pretrained_model_name=pretrained_model_name_syn,
             num_labels=num_labels,
             device=device
+        )
+        self.mwe_tagger_syn.load_state_dict(
+            torch.load(
+                syn_model_path,
+                map_location=torch.device(device)
+            )
         )
 
     def forward(self, input_ids: Tensor, attention_mask: Tensor):
