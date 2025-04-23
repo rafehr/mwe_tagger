@@ -22,9 +22,14 @@ class StreusleDataset(Dataset):
 
     def __getitem__(self, idx: int) -> Dict[str, List[str]]:
         tokens = [tok['form'] for tok in self.sents[idx]]
+        deprels = [tok['deprel'] for tok in self.sents[idx]]
         labels = [tok['lextag'] for tok in self.sents[idx]]
         
-        return {'tokens': tokens, 'labels': labels}
+        return {
+            'tokens': tokens,
+            'deprels': deprels,
+            'labels': labels
+        }
 
 ########################################################################
 # Functions
@@ -137,14 +142,9 @@ def get_label_dict(
     data: List[TokenList]
 ) -> Tuple[Dict[str, int], Dict[int, str]]:
     """Creates dictionaries that map from labels to integers and
-    from integers to labels. Also, it writes the label dictionaries
-    to JSON files.
+    vice versa. Also, it writes the label dictionaries to JSON files.
     """
-    labels = [
-        tok['lextag']
-        for sent in data
-        for tok in sent
-    ]
+    labels = [tok['lextag'] for sent in data for tok in sent]
     unique_labels = sorted(list(set(labels)))
     label_to_id = {l: i for i, l in enumerate(unique_labels)}
     id_to_label = {i: l for l, i in label_to_id.items()}
@@ -152,6 +152,19 @@ def get_label_dict(
     save_labels(label_to_id=label_to_id, id_to_label=id_to_label)
     return label_to_id, id_to_label
 
+
+def get_deprel_dict(
+    data: List[TokenList]
+) -> Tuple[Dict[str, int], Dict[int, str]]:
+    """Creates dictionaries that map from depencency relations to
+    integers and vice versa.
+    """
+    deprels = [tok['deprel'] for sent in data for tok in sent]
+    unique_deprels = sorted(list(set(deprels)))
+    deprel_to_id = {l: i for i, l in enumerate(unique_deprels)}
+    id_to_deprel = {i: l for l, i in deprel_to_id.items()}
+    id_to_deprel[-100] = '[IGNORE]'
+    return deprel_to_id, id_to_deprel
 
 def save_labels(label_to_id: Dict[str, int], id_to_label: Dict[int, str]):
     """Writes the label dictionaries to a JSON file."""

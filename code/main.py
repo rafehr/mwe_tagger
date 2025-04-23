@@ -9,7 +9,14 @@ from transformers import BertTokenizerFast
 from sklearn.model_selection import KFold
 import numpy as np
 
-from data import StreusleDataset, read_streusle_conllulex, collate_fn, get_label_dict, create_subset # type: ignore
+from data import (
+    StreusleDataset, # type: ignore
+    read_streusle_conllulex, # type: ignore
+    collate_fn, # type: ignore
+    get_label_dict, # type: ignore
+    get_deprel_dict, # type: ignore
+    create_subset # type: ignore
+) 
 from preprocessing import change_lextag_labels
 from model import MWETagger
 from train import train
@@ -65,6 +72,12 @@ print(f"Cross validation: {CROSS_VAL}")
 all_sents = train_data.sents + dev_data.sents + test_data.sents
 label_to_id, id_to_label = get_label_dict(data=all_sents)
 print(f"Using the following labels: {label_to_id}")
+
+# Fetch dependency relations and create dictionaries that map them
+# to integers and vice versa
+deprel_to_id, id_to_deprel = get_deprel_dict(data=all_sents)
+print(deprel_to_id)
+exit()
 
 # Instantiate BERT tokenizer
 tokenizer = BertTokenizerFast.from_pretrained(TOKENIZER_NAME)
