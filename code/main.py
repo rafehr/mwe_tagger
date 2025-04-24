@@ -18,7 +18,7 @@ from data import (
     create_subset # type: ignore
 ) 
 from preprocessing import change_lextag_labels
-from model import MWETagger
+from model import MWETagger, MWETaggerDep
 from train import train
 
 arg_parser = argparse.ArgumentParser()
@@ -77,14 +77,11 @@ print(f"Using the following labels: {label_to_id}")
 # to integers and vice versa
 deprel_to_id, id_to_deprel = get_deprel_dict(data=all_sents)
 print(deprel_to_id)
-exit()
 
 # Instantiate BERT tokenizer
 tokenizer = BertTokenizerFast.from_pretrained(TOKENIZER_NAME)
 
 if not CROSS_VAL:
-    print(len(train_data))
-    print(len(dev_data))
     # Create data loaders for train and dev
     train_data_loader = DataLoader(
         dataset=train_data,
@@ -94,6 +91,7 @@ if not CROSS_VAL:
         collate_fn=lambda batch: collate_fn(
             batch=batch,
             label_to_id=label_to_id,
+            deprel_to_id=deprel_to_id,
             tokenizer=tokenizer,
             max_len=128
         )
@@ -112,9 +110,11 @@ if not CROSS_VAL:
     )
 
     # Instantiate the model
-    model = MWETagger(
+    model = MWETaggerDep(
         pretrained_model_name=PRETRAINED_MODEL_NAME,
         num_labels=len(label_to_id),
+        num_deprels=len(deprel_to_id),
+        deprel_emb_dim=64,
         device=device
     ).to(device)
 

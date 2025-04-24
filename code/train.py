@@ -52,6 +52,7 @@ def train(
         # Making batch-wise predictions
         for batch in tqdm(train_data_loader):
             batch_input_ids = batch['input_ids'].to(device)
+            batch_deprels = batch['deprels'].to(device)
             batch_attention_mask = batch['attention_mask'].to(device)
             batch_labels = batch['labels'].to(device)
 
@@ -60,6 +61,7 @@ def train(
             # Make predictions 
             logits = model(
                 input_ids=batch_input_ids,
+                deprels=batch_deprels,
                 attention_mask=batch_attention_mask,
             )
 
