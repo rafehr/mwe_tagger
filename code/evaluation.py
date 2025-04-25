@@ -106,6 +106,7 @@ def evaluate(
         total_samples = 0
         for batch in tqdm(data_loader):
             batch_input_ids = batch['input_ids'].to(device)
+            batch_deprels = batch['deprels'].to(device)
             batch_attention_mask = batch['attention_mask'].to(device)
             batch_labels = batch['labels'].to(device)
 
@@ -114,6 +115,7 @@ def evaluate(
             # Make predictions
             logits = model(
                 input_ids=batch_input_ids,
+                deprels=batch_deprels,
                 attention_mask=batch_attention_mask
             )
             predictions = torch.argmax(logits, dim=2)
