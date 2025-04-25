@@ -169,6 +169,7 @@ else:
             collate_fn=lambda batch: collate_fn(
                 batch=batch,
                 label_to_id=label_to_id,
+                deprel_to_id=deprel_to_id,
                 tokenizer=tokenizer,
                 max_len=128
             )
@@ -181,15 +182,18 @@ else:
             collate_fn=lambda batch: collate_fn(
                 batch=batch,
                 label_to_id=label_to_id,
+                deprel_to_id=deprel_to_id,
                 tokenizer=tokenizer,
                 max_len=128
             )
         )
 
         # Instantiate the model
-        model = MWETagger(
+        model = MWETaggerDep(
             pretrained_model_name=PRETRAINED_MODEL_NAME,
             num_labels=len(label_to_id),
+            num_deprels=len(deprel_to_id),
+            deprel_emb_dim=64,
             device=device
         ).to(device)
         
