@@ -34,6 +34,7 @@ TRAIN_PATH = Path(config['data']['train_path'])
 DEV_PATH = Path(config['data']['dev_path'])
 TEST_PATH = Path(config['data']['test_path'])
 BIO_SCHEME = config['data']['bio_scheme']
+# # DATA_SET_TYPE = config['data']['data_set_type']
 
 # Model configs
 PRETRAINED_MODEL_NAME = config['model']['pretrained_model_name']

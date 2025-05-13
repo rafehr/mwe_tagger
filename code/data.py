@@ -31,6 +31,25 @@ class StreusleDataset(Dataset):
             'labels': labels
         }
 
+
+class ParsemeDataset(Dataset):
+    def __init__(self, sents: List[TokenList]):
+        self.sents = sents
+
+    def __len__(self) -> int:
+        return len(self.sents)
+
+    def __getitem__(self, idx: int) -> Dict[str, List[str]]:
+        tokens = [tok['form'] for tok in self.sents[idx]]
+        deprels = [tok['deprel'] for tok in self.sents[idx]]
+        labels = [tok['parseme:mwe'] for tok in self.sents[idx]]
+        
+        return {
+            'tokens': tokens,
+            'deprels': deprels,
+            'labels': labels
+        }
+
 ########################################################################
 # Functions
 ########################################################################
