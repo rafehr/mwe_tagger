@@ -145,7 +145,8 @@ else:
     )
 
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    results_dir = SAVE_DIR / f'cross_val_{timestamp}'
+    pretrained_model_name = PRETRAINED_MODEL_NAME.replace('/', '_')
+    results_dir = SAVE_DIR / 'results' / f'run_{pretrained_model_name}_{timestamp}'
     results_dir.mkdir(parents=True, exist_ok=True)
     
     results_dict = {
