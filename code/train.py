@@ -7,6 +7,7 @@ from tqdm import trange, tqdm
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from transformers import BertTokenizerFast
 
 from evaluation import evaluate, EvalMetrics
 from data import save_train_metadata # type: ignore
@@ -20,6 +21,7 @@ def train(
     num_epochs: int,
     patience: int,
     learning_rate: float,
+    tokenizer: BertTokenizerFast,
     save_dir: Optional[Path] = None
 ) -> EvalMetrics:
     criterion = nn.CrossEntropyLoss(ignore_index=-100)
@@ -81,7 +83,7 @@ def train(
             optimizer.step()
             # Reset the gradients
             optimizer.zero_grad()
-            # break
+            break
 
         # Print loss averaged over all batches 
         average_loss = total_loss/total_samples
@@ -95,7 +97,8 @@ def train(
             data_loader=dev_data_loader,
             criterion=criterion,
             device=device,
-            batch_size=batch_size
+            batch_size=batch_size,
+            tokenizer=tokenizer
         )
 
         print(f"F1-Score: {eval_metrics.f1}")
@@ -108,6 +111,10 @@ def train(
             best_val_precision = eval_metrics.precision
             best_val_recall = eval_metrics.recall
             best_val_class_report = eval_metrics.classification_report
+            best_gold_labels = eval_metrics.gold_labels
+            best_predictions = eval_metrics.predictions
+            best_sent_ids = eval_metrics.sent_ids
+            best_og_sents = eval_metrics.og_sents
             counter = 0
             if save_dir:
                 torch.save(
@@ -123,7 +130,7 @@ def train(
 
         # Put model back into training mode
         model.train()
-        # break
+        break
 
     if save_dir:
         save_train_metadata(
@@ -137,6 +144,10 @@ def train(
         best_val_precision,
         best_val_recall,
         best_val_f1,
-        best_val_class_report
+        best_val_class_report,
+        best_gold_labels,
+        best_predictions,
+        best_sent_ids,
+        best_og_sents
     )
     

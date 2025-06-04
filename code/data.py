@@ -21,11 +21,13 @@ class StreusleDataset(Dataset):
         return len(self.sents)
 
     def __getitem__(self, idx: int) -> Dict[str, List[str]]:
+        sent_id = self.sents[idx].metadata['sent_id']
         tokens = [tok['form'] for tok in self.sents[idx]]
         deprels = [tok['deprel'] for tok in self.sents[idx]]
         labels = [tok['lextag'] for tok in self.sents[idx]]
         
         return {
+            'sent_id': sent_id,
             'tokens': tokens,
             'deprels': deprels,
             'labels': labels
@@ -40,11 +42,14 @@ class ParsemeDataset(Dataset):
         return len(self.sents)
 
     def __getitem__(self, idx: int) -> Dict[str, List[str]]:
+        sent_id = self.sents[idx].metadata['sent_id']
         tokens = [tok['form'] for tok in self.sents[idx]]
         deprels = [tok['deprel'] for tok in self.sents[idx]]
         labels = [tok['parseme:mwe'] for tok in self.sents[idx]]
         
         return {
+            'sent_id': sent_id,
+            'tokens': tokens,
             'tokens': tokens,
             'deprels': deprels,
             'labels': labels
@@ -55,7 +60,7 @@ class ParsemeDataset(Dataset):
 ########################################################################
 
 def collate_fn(
-    batch: List[Dict[str, List[str]]],
+    batch: List[Dict[str, str | List[str]]],
     label_to_id: Dict[str, int],
     deprel_to_id: Dict[str, int],
     tokenizer: BertTokenizerFast,
@@ -69,6 +74,7 @@ def collate_fn(
             an example. Example:
                 [   
                     {
+                    'sent_id': 'reviews_457787',
                     'tokens': ['Maria', 'loves', 'Kim'],
                     'deprels': ['nsbj', 'loves', 'obj'],
                     'labels': ['O', 'O', 'O']
@@ -82,6 +88,7 @@ def collate_fn(
         max_len: The maximum number of tokens a tokenized input
             sequence can have
     """
+    batch_sent_ids = [example['sent_id'] for example in batch]
     batch_tokens = [example['tokens'] for example in batch]
     batch_deprels = [example['deprels'] for example in batch]
     batch_labels = [example['labels'] for example in batch]
@@ -91,7 +98,7 @@ def collate_fn(
                          for deprels in batch_deprels]
 
     batch_encoding = tokenizer(
-        batch_tokens,
+        batch_tokens, # type: ignore
         is_split_into_words=True,
         truncation=True,
         padding=True,
@@ -99,6 +106,7 @@ def collate_fn(
         return_tensors='pt'
     )
 
+    batch_encoding['sent_ids'] = batch_sent_ids
     batch_aligned_deprels = [
         align_deprels(enc_deprels, batch_encoding.word_ids(i))
         for i, enc_deprels in enumerate(batch_enc_deprels)

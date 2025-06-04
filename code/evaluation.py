@@ -1,6 +1,6 @@
 import json
 import argparse
-from typing import Tuple, List, Dict, Any
+from typing import Tuple, List, Dict, Any, Optional
 from dataclasses import dataclass
 
 import torch
@@ -23,6 +23,10 @@ class EvalMetrics:
     recall: float | List[float] 
     f1: float | List[float] | None
     classification_report: str | Dict[Any, Any]
+    gold_labels: List[List[str]]
+    predictions: List[List[str]]
+    sent_ids: Optional[List[str]] = None
+    og_sents: Optional[List[List[str]]] = None
 
 
 def remove_ignore_labels(
@@ -65,6 +69,7 @@ def convert_labels(
     return gold_conv_labels, conv_predictions
 
 
+
 def compute_eval_metrics(
     gold_labels: List[List[int]],
     preds: List[List[int]],
@@ -88,7 +93,43 @@ def compute_eval_metrics(
         conv_predictions,
         output_dict=True
     )
-    return EvalMetrics(accuracy, precision, recall, f1, class_report)
+    return EvalMetrics(
+        accuracy,
+        precision,
+        recall,
+        f1, 
+        class_report,
+        gold_conv_labels,
+        conv_predictions
+    )
+
+
+def reconstruct_og_tokens(
+    tokenizer: BertTokenizerFast,
+    batch_input_ids: torch.Tensor
+):
+    """Reconstructs the original sentences using the input ids."""
+    sents = [
+        tokenizer.convert_ids_to_tokens(input_ids) # type: ignore
+        for input_ids in batch_input_ids
+    ]
+    og_sents = []
+    for sent in sents:
+        words = []
+        current_word = ''
+        for token in sent:
+            if token in ('[CLS]', '[PAD]', '[SEP]'):
+                continue
+            if token.startswith('##'):
+                current_word += token[2:]
+            else:
+                if current_word:
+                    words.append(current_word)
+                current_word = token
+        if current_word:
+            words.append(current_word)
+        og_sents.append(words)
+    return og_sents
 
 
 def evaluate(
@@ -96,9 +137,12 @@ def evaluate(
     data_loader: torch.utils.data.DataLoader,
     criterion: nn.CrossEntropyLoss,
     device: str,
-    batch_size: int
+    batch_size: int,
+    tokenizer: BertTokenizerFast
 ) -> Tuple[float, EvalMetrics]: 
     model.eval()
+    all_sent_ids = []
+    all_sents = []
     all_predictions = []
     all_labels = []
     with torch.no_grad():
@@ -125,11 +169,21 @@ def evaluate(
                     logits.view(-1, logits.shape[2]),
                     batch_labels.view(-1)
             )
+
+            og_sents = reconstruct_og_tokens(
+                tokenizer=tokenizer,
+                batch_input_ids=batch_input_ids
+            )
                     
+            # Add reconstructed sentences to all_sents
+            all_sents.extend(og_sents)
+            # Add sentence ids to overall sentence ids
+            all_sent_ids.extend(batch['sent_ids'])
             # Add batch-wise predictions and labels to overall
             # predictions and labels
             all_predictions.extend(predictions.tolist())
             all_labels.extend(batch_labels.tolist())
+
             
             # Add batch loss to total loss and weigh it by batch size
             total_loss += loss.item() * batch_size
@@ -143,6 +197,10 @@ def evaluate(
             preds=all_predictions,
             label_path='id_to_label.json'
         )
+        # Add sentence ids to eval metrics
+        eval_metrics.sent_ids = all_sent_ids
+        # Add original sentences to eval metrics
+        eval_metrics.og_sents = all_sents
     return average_loss, eval_metrics
  
 if __name__ == '__main__':
@@ -222,7 +280,8 @@ if __name__ == '__main__':
         data_loader=data_loader,
         criterion=criterion,
         device=device,
-        batch_size=BATCH_SIZE
+        batch_size=BATCH_SIZE,
+        tokenizer=tokenizer
     )
 
     print(f"F1-Score: {eval_metrics.f1}")

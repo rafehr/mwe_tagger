@@ -47,11 +47,13 @@ LEARNING_RATE = config['training']['learning_rate']
 SAVE_DIR = Path(config['training']['save_dir'])
 PATIENCE = config['training']['patience']
 CROSS_VAL = config['training']['cross_validation']
+SAVE_PREDICTIONS = config['training']['save_predictions']
 
 # Read STREUSLE data
 train_sents = read_streusle_conllulex(TRAIN_PATH)
 dev_sents = read_streusle_conllulex(DEV_PATH)
 test_sents = read_streusle_conllulex(TEST_PATH)
+
 
 # Create data sets
 train_data = StreusleDataset(train_sents)
@@ -131,6 +133,7 @@ if not CROSS_VAL:
         num_epochs=NUM_EPOCHS,
         patience=PATIENCE,
         learning_rate=LEARNING_RATE,
+        tokenizer=tokenizer,
         save_dir=SAVE_DIR
     )
 else:
@@ -159,7 +162,7 @@ else:
         'mean_recall_score': 0
     }
 
-    for train_idxs, val_idxs in kf.split(all_data):
+    for fold, (train_idxs, val_idxs) in enumerate(kf.split(all_data)):
         train_subset = create_subset(all_data, train_idxs.tolist())
         val_subset = create_subset(all_data, val_idxs.tolist())
 
@@ -210,8 +213,31 @@ else:
             device=device,
             num_epochs=NUM_EPOCHS,
             patience=PATIENCE,
-            learning_rate=LEARNING_RATE
+            learning_rate=LEARNING_RATE,
+            tokenizer=tokenizer
         )
+
+
+        # Creating the prediction dict and filling it with all the
+        # information needed for error analysis
+        preds_dict = {}
+
+        gold_labels = best_model_eval_metrics.gold_labels
+        preds = best_model_eval_metrics.predictions
+        sent_ids = best_model_eval_metrics.sent_ids
+        og_sents = best_model_eval_metrics.og_sents
+
+        for gl, p, sent_idx, og_sent in zip(gold_labels, preds, sent_ids, og_sents): # type: ignore
+            preds_dict[sent_idx] = {
+                'sentence': og_sent,
+                'predictions': p,
+                'gold_labels': gl,
+                'preds_vs_gold': [(pr, go) for pr, go in zip(p, gl)]
+            }
+        
+
+        with open(results_dir / f'pred_dict_{fold}.json', 'w') as f:
+            json.dump(preds_dict, f, indent=4)
 
         results_dict['f1_scores'].append(
             best_model_eval_metrics.f1
