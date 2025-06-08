@@ -6,7 +6,7 @@ from datetime import datetime
 import torch
 from torch.utils.data import DataLoader, Subset
 from transformers import BertTokenizerFast
-from sklearn.model_selection import KFold
+from sklearn.model_selection import RepeatedKFold
 import numpy as np
 
 from data import (
@@ -138,7 +138,7 @@ if not CROSS_VAL:
     )
 else:
     print("Performing cross validation")
-    kf = KFold(n_splits=10, shuffle=True, random_state=42)
+    rkf = RepeatedKFold(n_splits=10, n_repeats=10, random_state=42)
 
     # Add dev and test data to train_data. It is necessary to access
     # the sentences in the StreusleDataset object because only there
@@ -162,7 +162,10 @@ else:
         'mean_recall_score': 0
     }
 
-    for fold, (train_idxs, val_idxs) in enumerate(kf.split(all_data)):
+    for fold, (train_idxs, val_idxs) in enumerate(rkf.split(all_data)):
+        print('****************************************************')
+        print(f'Fold: {fold}')
+        print('****************************************************')
         train_subset = create_subset(all_data, train_idxs.tolist())
         val_subset = create_subset(all_data, val_idxs.tolist())
 

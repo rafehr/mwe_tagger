@@ -83,7 +83,7 @@ def train(
             optimizer.step()
             # Reset the gradients
             optimizer.zero_grad()
-            # break
+            break
 
         # Print loss averaged over all batches 
         average_loss = total_loss/total_samples
@@ -130,7 +130,7 @@ def train(
 
         # Put model back into training mode
         model.train()
-        # break
+        break
 
     if save_dir:
         save_train_metadata(

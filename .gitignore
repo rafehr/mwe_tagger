@@ -2,3 +2,5 @@ __pycache__/
 data/
 code/saved/
 code/nohup.out
+code/syntax_enhanced_models_results.txt
+code/compile_results.py
