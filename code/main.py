@@ -159,7 +159,10 @@ else:
         'class_reports': [],
         'mean_f1_score': 0,
         'mean_precision_score': 0,
-        'mean_recall_score': 0
+        'mean_recall_score': 0,
+        'std_f1_score': 0,
+        'std_precision_score': 0,
+        'std_recall_score': 0
     }
 
     for fold, (train_idxs, val_idxs) in enumerate(rkf.split(all_data)):
@@ -264,5 +267,15 @@ else:
     results_dict['mean_recall_score'] = np.mean(
         results_dict['recall_scores']
     )
+    results_dict['std_f1_score'] = np.std(
+        results_dict['f1_scores']
+    )
+    results_dict['std_precision_score'] = np.std(
+        results_dict['precision_scores']
+    )
+    results_dict['std_recall_score'] = np.std(
+        results_dict['recall_scores']
+    )
+
     with open(results_dir / 'results.json', 'w') as f:
         json.dump(results_dict, f, indent=4)
