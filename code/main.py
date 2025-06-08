@@ -39,6 +39,7 @@ BIO_SCHEME = config['data']['bio_scheme']
 # Model configs
 PRETRAINED_MODEL_NAME = config['model']['pretrained_model_name']
 TOKENIZER_NAME = config['model']['tokenizer_name']
+ADD_DEP_EMBS = config['model']['add_dep_embs']
 
 # Training configs
 BATCH_SIZE = config['training']['batch_size']
@@ -199,15 +200,23 @@ else:
             )
         )
 
-        # Instantiate the model
-        model = MWETaggerDep(
-            pretrained_model_name=PRETRAINED_MODEL_NAME,
-            num_labels=len(label_to_id),
-            num_deprels=len(deprel_to_id),
-            deprel_emb_dim=64,
-            device=device
-        ).to(device)
-        
+        if ADD_DEP_EMBS:
+            # Instantiate the model with dependency embeddings
+            model = MWETaggerDep(
+                pretrained_model_name=PRETRAINED_MODEL_NAME,
+                num_labels=len(label_to_id),
+                num_deprels=len(deprel_to_id),
+                deprel_emb_dim=64,
+                device=device
+            ).to(device)
+        else:
+            # Instantiate the model
+            model = MWETagger(
+                pretrained_model_name=PRETRAINED_MODEL_NAME,
+                num_labels=len(label_to_id),
+                device=device
+            ).to(device)
+            
         print(f"Using the following model: \n{model}")
 
         # Train the model
