@@ -135,6 +135,7 @@ if not CROSS_VAL:
         patience=PATIENCE,
         learning_rate=LEARNING_RATE,
         tokenizer=tokenizer,
+        add_deprels=ADD_DEP_EMBS,
         save_dir=SAVE_DIR
     )
 else:
@@ -229,6 +230,7 @@ else:
             num_epochs=NUM_EPOCHS,
             patience=PATIENCE,
             learning_rate=LEARNING_RATE,
+            add_deprels=ADD_DEP_EMBS,
             tokenizer=tokenizer
         )
 

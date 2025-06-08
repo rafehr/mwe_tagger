@@ -138,7 +138,8 @@ def evaluate(
     criterion: nn.CrossEntropyLoss,
     device: str,
     batch_size: int,
-    tokenizer: BertTokenizerFast
+    tokenizer: BertTokenizerFast,
+    add_deprels: bool,
 ) -> Tuple[float, EvalMetrics]: 
     model.eval()
     all_sent_ids = []
@@ -157,11 +158,18 @@ def evaluate(
             # Get batch size for weighing the batch-wise loss
             batch_size = batch['input_ids'].shape[0]
             # Make predictions
-            logits = model(
-                input_ids=batch_input_ids,
-                deprels=batch_deprels,
-                attention_mask=batch_attention_mask
-            )
+            if add_deprels:
+                logits = model(
+                    input_ids=batch_input_ids,
+                    deprels=batch_deprels,
+                    attention_mask=batch_attention_mask
+                )
+            else:
+                logits = model(
+                    input_ids=batch_input_ids,
+                    attention_mask=batch_attention_mask,
+                )
+
             predictions = torch.argmax(logits, dim=2)
             
             # Compute the loss
@@ -220,6 +228,7 @@ if __name__ == '__main__':
     # Configs
     PRETRAINED_MODEL_NAME = config['model']['pretrained_model_name']
     TOKENIZER_NAME = config['model']['tokenizer_name']
+    ADD_DEP_EMBS = config['model']['add_dep_embs']
     BATCH_SIZE = config['training']['batch_size']
 
     # Specify device
@@ -281,6 +290,7 @@ if __name__ == '__main__':
         criterion=criterion,
         device=device,
         batch_size=BATCH_SIZE,
+        add_deprels=ADD_DEP_EMBS,
         tokenizer=tokenizer
     )
 

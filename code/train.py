@@ -22,6 +22,7 @@ def train(
     patience: int,
     learning_rate: float,
     tokenizer: BertTokenizerFast,
+    add_deprels: bool,
     save_dir: Optional[Path] = None
 ) -> EvalMetrics:
     criterion = nn.CrossEntropyLoss(ignore_index=-100)
@@ -61,11 +62,17 @@ def train(
             # Get batch size for weighing the batch-wise loss
             batch_size = batch['input_ids'].shape[0]
             # Make predictions 
-            logits = model(
-                input_ids=batch_input_ids,
-                deprels=batch_deprels,
-                attention_mask=batch_attention_mask,
-            )
+            if add_deprels:
+                logits = model(
+                    input_ids=batch_input_ids,
+                    deprels=batch_deprels,
+                    attention_mask=batch_attention_mask,
+                )
+            else:
+                logits = model(
+                    input_ids=batch_input_ids,
+                    attention_mask=batch_attention_mask,
+                )
 
             # Compute the loss
             loss = criterion(
@@ -98,7 +105,8 @@ def train(
             criterion=criterion,
             device=device,
             batch_size=batch_size,
-            tokenizer=tokenizer
+            tokenizer=tokenizer,
+            add_deprels=add_deprels
         )
 
         print(f"F1-Score: {eval_metrics.f1}")
