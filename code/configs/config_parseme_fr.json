@@ -6,8 +6,8 @@
         "bio_scheme": "bio2"
     },
     "model": {
-        "pretrained_model_name": "flaubert/flaubert_base_uncased",
-        "tokenizer_name": "flaubert/flaubert_base_uncased",
+        "pretrained_model_name": "camembert-base",
+        "tokenizer_name": "camembert-base",
         "add_dep_embs": true
     },
     "training": {

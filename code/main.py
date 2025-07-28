@@ -5,7 +5,7 @@ from datetime import datetime
 
 import torch
 from torch.utils.data import DataLoader, Subset
-from transformers import FlaubertTokenizer
+from transformers import CamembertTokenizerFast
 from sklearn.model_selection import RepeatedKFold
 import numpy as np
 
@@ -91,7 +91,7 @@ deprel_to_id, id_to_deprel = get_deprel_dict(data=all_sents)
 print(deprel_to_id)
 
 # Instantiate BERT tokenizer
-tokenizer = FlaubertTokenizer.from_pretrained(TOKENIZER_NAME)
+tokenizer = CamembertTokenizerFast.from_pretrained(TOKENIZER_NAME)
 
 if not CROSS_VAL:
     # Create data loaders for train and dev
