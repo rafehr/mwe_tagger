@@ -17,7 +17,7 @@ from data import (
     get_deprel_dict, # type: ignore
     create_subset # type: ignore
 ) 
-from preprocessing import change_lextag_labels
+from preprocessing import change_lextag_labels, change_deprels
 from model import MWETagger, MWETaggerDep
 from train import train
 
@@ -55,7 +55,6 @@ train_sents = read_streusle_conllulex(TRAIN_PATH)
 dev_sents = read_streusle_conllulex(DEV_PATH)
 test_sents = read_streusle_conllulex(TEST_PATH)
 
-
 # Create data sets
 train_data = StreusleDataset(train_sents)
 dev_data = StreusleDataset(dev_sents)
@@ -64,6 +63,10 @@ test_data = StreusleDataset(test_sents)
 # Change LEXTAG labels so that only VMWEs have IOB labels (including the
 # vmwe category, i.e. B-VID) and everything else receives the 'O' tag
 change_lextag_labels(train_data.sents + dev_data.sents + test_data.sents)
+
+change_deprels(train_data.sents)
+
+exit()
 
 # Specify device
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
