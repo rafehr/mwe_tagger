@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch import Tensor
-from transformers import BertModel
+from transformers import FlaubertModel
 
 class MWETagger(nn.Module):
     def __init__(self,
@@ -12,7 +12,7 @@ class MWETagger(nn.Module):
         super(MWETagger, self).__init__()
         self.num_labels = num_labels
         self.device = device
-        self.base_model = BertModel.from_pretrained(pretrained_model_name)
+        self.base_model = FlaubertModel.from_pretrained(pretrained_model_name)
         H = self.base_model.config.hidden_size
         self.dropout = nn.Dropout(0.2)
         self.classifier = nn.Linear(
@@ -56,7 +56,7 @@ class MWETaggerDep(nn.Module):
         super(MWETaggerDep, self).__init__()
         self.num_labels = num_labels
         self.device = device
-        self.base_model = BertModel.from_pretrained(pretrained_model_name)
+        self.base_model = FlaubertModel.from_pretrained(pretrained_model_name)
         self.deprel_embs = nn.Embedding(
             num_embeddings=num_deprels+1,
             embedding_dim=deprel_emb_dim,
