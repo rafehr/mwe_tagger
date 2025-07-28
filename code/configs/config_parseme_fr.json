@@ -6,8 +6,8 @@
         "bio_scheme": "bio2"
     },
     "model": {
-        "pretrained_model_name": "bert-base-uncased",
-        "tokenizer_name": "bert-base-uncased",
+        "pretrained_model_name": "flaubert/flaubert_base_uncased",
+        "tokenizer_name": "flaubert/flaubert_base_uncased",
         "add_dep_embs": true
     },
     "training": {
@@ -16,7 +16,7 @@
         "learning_rate": 3e-05,
         "save_dir": "./saved/",
         "seed": 42,
-        "patience": 3,
+        "patience": 20,
         "cross_validation": false,
         "save_predictions": true
     }
