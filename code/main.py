@@ -11,7 +11,9 @@ import numpy as np
 
 from data import (
     StreusleDataset, # type: ignore
+    ParsemeDataset, # type: ignore
     read_streusle_conllulex, # type: ignore
+    read_parseme_cupt, # type: ignore
     collate_fn, # type: ignore
     get_label_dict, # type: ignore
     get_deprel_dict, # type: ignore
@@ -51,22 +53,22 @@ CROSS_VAL = config['training']['cross_validation']
 SAVE_PREDICTIONS = config['training']['save_predictions']
 
 # Read STREUSLE data
-train_sents = read_streusle_conllulex(TRAIN_PATH)
-dev_sents = read_streusle_conllulex(DEV_PATH)
-test_sents = read_streusle_conllulex(TEST_PATH)
+train_sents = read_parseme_cupt(TRAIN_PATH)
+dev_sents = read_parseme_cupt(DEV_PATH)
+test_sents = read_parseme_cupt(TEST_PATH)
 
 # Create data sets
-train_data = StreusleDataset(train_sents)
-dev_data = StreusleDataset(dev_sents)
-test_data = StreusleDataset(test_sents)
+train_data = ParsemeDataset(train_sents)
+dev_data = ParsemeDataset(dev_sents)
+test_data = ParsemeDataset(test_sents)
+
 
 # Change LEXTAG labels so that only VMWEs have IOB labels (including the
 # vmwe category, i.e. B-VID) and everything else receives the 'O' tag
-change_lextag_labels(train_data.sents + dev_data.sents + test_data.sents)
+# change_lextag_labels(train_data.sents + dev_data.sents + test_data.sents)
 
-change_deprels(train_data.sents)
+# change_deprels(train_data.sents)
 
-exit()
 
 # Specify device
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -77,7 +79,10 @@ print(f"Cross validation: {CROSS_VAL}")
 # Fetch the BIO-style labels that include MWE information and create
 # a label dictionary that includes all labels (train, dev and test).
 all_sents = train_data.sents + dev_data.sents + test_data.sents
-label_to_id, id_to_label = get_label_dict(data=all_sents)
+label_to_id, id_to_label = get_label_dict(
+    data=all_sents,
+    streusle=False
+)
 print(f"Using the following labels: {label_to_id}")
 
 # Fetch dependency relations and create dictionaries that map them
@@ -111,6 +116,7 @@ if not CROSS_VAL:
         collate_fn=lambda batch: collate_fn(
             batch=batch,
             label_to_id=label_to_id,
+            deprel_to_id=deprel_to_id,
             tokenizer=tokenizer,
             max_len=128
         )

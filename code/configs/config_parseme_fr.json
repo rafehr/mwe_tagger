@@ -1,0 +1,23 @@
+{
+    "data": {
+        "train_path": "../data/fr/train.cupt",
+        "dev_path": "../data/fr/dev.cupt",
+        "test_path": "../data/fr/test.cupt",
+        "bio_scheme": "bio2"
+    },
+    "model": {
+        "pretrained_model_name": "bert-base-uncased",
+        "tokenizer_name": "bert-base-uncased",
+        "add_dep_embs": true
+    },
+    "training": {
+        "batch_size": 8,
+        "num_epochs": 20,
+        "learning_rate": 3e-05,
+        "save_dir": "./saved/",
+        "seed": 42,
+        "patience": 3,
+        "cross_validation": false,
+        "save_predictions": true
+    }
+}

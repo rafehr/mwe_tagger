@@ -42,14 +42,13 @@ class ParsemeDataset(Dataset):
         return len(self.sents)
 
     def __getitem__(self, idx: int) -> Dict[str, List[str]]:
-        sent_id = self.sents[idx].metadata['sent_id']
+        sent_id = self.sents[idx].metadata['source_sent_id']
         tokens = [tok['form'] for tok in self.sents[idx]]
         deprels = [tok['deprel'] for tok in self.sents[idx]]
         labels = [tok['parseme:mwe'] for tok in self.sents[idx]]
         
         return {
             'sent_id': sent_id,
-            'tokens': tokens,
             'tokens': tokens,
             'deprels': deprels,
             'labels': labels
@@ -133,6 +132,17 @@ def read_streusle_conllulex(file_path: Path) -> List[TokenList]:
         'deps', 'misc', 'smwe', 'lexcat',
         'lexlemma', 'ss', 'ss2', 'wmwe',
         'wcat', 'wlemma', 'lextag'
+    )
+    with open(file_path, 'r', encoding='utf-8') as f:
+       sents = parse(f.read(), fields)
+    return sents
+
+def read_parseme_cupt(file_path: Path) -> List[TokenList]:
+    """Reads a STREUSLE conllulex file."""
+    fields = (
+        'id', 'form', 'lemma', 'upos',
+        'xpos', 'feats', 'head', 'deprel',
+        'deps', 'misc', 'parseme:mwe'
     )
     with open(file_path, 'r', encoding='utf-8') as f:
        sents = parse(f.read(), fields)
@@ -233,12 +243,16 @@ def ids_to_tokens(
 
 
 def get_label_dict(
-    data: List[TokenList]
+    data: List[TokenList],
+    streusle: bool
 ) -> Tuple[Dict[str, int], Dict[int, str]]:
     """Creates dictionaries that map from labels to integers and
     vice versa. Also, it writes the label dictionaries to JSON files.
     """
-    labels = [tok['lextag'] for sent in data for tok in sent]
+    if streusle:
+        labels = [tok['lextag'] for sent in data for tok in sent]
+    else:
+        labels = [tok['parseme:mwe'] for sent in data for tok in sent]
     unique_labels = sorted(list(set(labels)))
     label_to_id = {l: i for i, l in enumerate(unique_labels)}
     id_to_label = {i: l for l, i in label_to_id.items()}
