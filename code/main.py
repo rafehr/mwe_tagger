@@ -2,10 +2,13 @@ import argparse
 import json
 from pathlib import Path
 from datetime import datetime
+import random
+import os
 
 import torch
 from torch.utils.data import DataLoader, Subset
-from transformers import CamembertTokenizerFast
+from transformers import CamembertTokenizerFast, set_seed
+
 from sklearn.model_selection import RepeatedKFold
 import numpy as np
 
@@ -23,9 +26,26 @@ from preprocessing import change_lextag_labels, change_deprels
 from model import MWETagger, MWETaggerDep
 from train import train
 
+def set_all_seeds(seed=42):
+    os.environ["PYTHONHASHSEED"] = str(seed)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)  # if using multi-GPU
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    torch.use_deterministic_algorithms(True)
+    set_seed(seed)
+    os.environ["TOKENIZERS_PARALLELISM"] = "false"  
+
 arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument('config_path', help='Path to config file')
 args = arg_parser.parse_args()
+
+set_all_seeds(42)
+
+exit()
 
 # Read the config file
 with open(args.config_path, 'r', encoding='utf-8') as f:
@@ -308,3 +328,4 @@ else:
 
     with open(results_dir / 'results.json', 'w') as f:
         json.dump(results_dict, f, indent=4)
+
