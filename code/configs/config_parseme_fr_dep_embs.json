@@ -8,7 +8,7 @@
     "model": {
         "pretrained_model_name": "camembert-base",
         "tokenizer_name": "camembert-base",
-        "add_dep_embs": false
+        "add_dep_embs": true
     },
     "training": {
         "batch_size": 8,
